@@ -1,0 +1,8 @@
+ads.google.com
+doubleclick.net
+facebook.com
+instagram.com
+tiktok.com
+ads.twitter.com
+analytics.google.com
+pagead2.googlesyndication.com
