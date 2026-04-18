@@ -1,88 +1,65 @@
-
+// config.go - configuration loading and management for the proxy server
+// Memory optimization: using struct{} instead of bool (0 bytes vs 1 byte per entry)
 package main
 
 import (
-
-"bufio"
-
-"fmt"
-
-"os"
-
-"strings"
-
+	"bufio"
+	"fmt"
+	"os"
+	"strings"
 )
 
+// Config holds the server configuration and blacklist
 type Config struct {
-
-Port int
-
-Blacklist map[string]bool
-
-ListenAddr string
-
+	Port       int
+	ListenAddr string
+	Blacklist  map[string]struct{} // struct{} consumes 0 bytes of memory
 }
 
+// LoadConfig reads blacklist from file and returns a Config struct
 func LoadConfig(blacklistFile string) (*Config, error) {
+	config := &Config{
+		Port:       8080,
+		ListenAddr: "127.0.0.1:8080",
+		Blacklist:  make(map[string]struct{}),
+	}
 
-config := &Config{
+	file, err := os.Open(blacklistFile)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "⚠️ Blacklist file %s not found: %v\n", blacklistFile, err)
+		fmt.Fprintln(os.Stderr, "📝 Continuing with empty blacklist")
+		return config, nil
+	}
+	defer file.Close()
 
-Port: 8080,
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
 
-ListenAddr: "127.0.0.1:8080",
+		// Skip empty lines and comments
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
 
-Blacklist: make(map[string]bool),
+		// Add domain to blacklist (case-insensitive)
+		domain := strings.ToLower(line)
+		config.Blacklist[domain] = struct{}{}
+	}
 
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("error reading blacklist file %s: %w", blacklistFile, err)
+	}
+
+	fmt.Printf("✅ Loaded %d domains into blacklist\n", len(config.Blacklist))
+	return config, nil
 }
 
-file, err := os.Open(blacklistFile)
-
-if err != nil {
-
-fmt.Printf("⚠️ Файл blacklist.txt не найден: %v\n", err)
-
-fmt.Println("📝 Создаю файл с примерами доменов...")
-
-return config, nil
-
-}
-
-defer file.Close()
-
-
-scanner := bufio.NewScanner(file)
-
-for scanner.Scan() {
-
-domain := strings.TrimSpace(scanner.Text())
-
-if domain != "" && !strings.HasPrefix(domain, "#") {
-
-config.Blacklist[strings.ToLower(domain)] = true
-
-}
-
-}
-
-  
-
-if err := scanner.Err(); err != nil {
-
-return nil, fmt.Errorf("ошибка при чтении файла: %v", err)
-
-}
-
-  
-
-fmt.Printf("✅ Загружено %d доменов в черный список\n", len(config.Blacklist))
-
-return config, nil
-
-}
-
+// IsBlocked checks if a domain is in the blacklist
 func (c *Config) IsBlocked(domain string) bool {
-
-return c.Blacklist[strings.ToLower(domain)]
-
+	// Guard against nil receiver (prevents panic)
+	if c == nil || c.Blacklist == nil {
+		return false
+	}
+	_, exists := c.Blacklist[strings.ToLower(domain)]
+	return exists
 }
-
