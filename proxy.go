@@ -80,7 +80,7 @@ func (s *Server) handleRequest(w http.ResponseWriter, r *http.Request) {
 
 	// Если это запрос к нашему прокси напрямую
 	if strings.HasPrefix(r.RequestURI, "/stats") || strings.HasPrefix(r.RequestURI, "/") && r.URL.Host == "" {
-		return 
+		return
 	}
 
 	fmt.Printf("[%d] ✅ Пропускаю: %s\n", requestNum, host)
