@@ -1,44 +1,57 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
+	"time"
 )
 
 func main() {
 	fmt.Println(strings.Repeat("=", 60))
-	fmt.Println("🌐 HTTP Прокси-Сервер с Фильтрацией")
+	fmt.Println("🌐 HTTP Proxy Server with Filtering")
 	fmt.Println(strings.Repeat("=", 60))
 
-	// Загружаем конфигурацию и черный список
+	// Load configuration and blacklist
 	config, err := LoadConfig("blacklist.txt")
 	if err != nil {
-		log.Fatal("Ошибка загрузки конфигурации:", err)
+		log.Fatal("Failed to load config:", err)
 	}
 
-	// Создаем фильтр
+	// Create filter
 	filter := NewFilter(config)
 
-	// Создаем и запускаем сервер
+	// Create server
 	server := NewServer(config, filter)
 
-	// Запускаем сервер в отдельной горутине
+	// Start server in a goroutine
 	go func() {
-		if err := server.Start(); err != nil {
-			log.Fatal("Ошибка при запуске сервера:", err)
+		log.Printf("🚀 Server starting on %s", config.ListenAddr)
+		if err := server.Start(); err != nil && err != http.ErrServerClosed {
+			log.Fatal("Server error:", err)
 		}
 	}()
 
-	// Ждем сигнала прерывания (Ctrl+C)
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	// Wait for interrupt signal (Ctrl+C)
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
 
-	<-sigChan
-	fmt.Println("\n\n🛑 Останавливаем сервер...")
-	server.Stop()
-	fmt.Println("✅ Сервер остановлен")
+	log.Println("\n🛑 Shutting down server...")
+
+	// Create context with timeout for graceful shutdown
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Gracefully stop the server
+	if err := server.Stop(ctx); err != nil {
+		log.Printf("Error during shutdown: %v", err)
+	}
+
+	log.Println("✅ Server stopped")
 }
