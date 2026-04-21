@@ -8,11 +8,13 @@ import (
 	"os"
 	"strings"
 )
+
 // Constants instead of magic numbers
 const (
-    DefaultPort       = 8080
-    DefaultListenAddr = "127.0.0.1:8080"
+	DefaultPort       = 8080
+	DefaultListenAddr = "127.0.0.1:8080"
 )
+
 // Config holds the server configuration and blacklist
 type Config struct {
 	Port       int
@@ -22,7 +24,7 @@ type Config struct {
 
 // LoadConfig reads blacklist from file and returns a Config struct
 func LoadConfig(blacklistFile string) (*Config, error) {
-	
+
 	config := &Config{
 		Port:       DefaultPort,
 		ListenAddr: DefaultListenAddr,

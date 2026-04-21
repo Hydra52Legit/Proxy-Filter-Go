@@ -1,8 +1,8 @@
 package main
 
 import (
-    "html/template"
-    "net/http"
+	"html/template"
+	"net/http"
 )
 
 var blockedTemplate = template.Must(template.New("blocked").Parse(`
@@ -73,14 +73,14 @@ var blockedTemplate = template.Must(template.New("blocked").Parse(`
 
 // BlockedResponse отправляет красивую страницу блокировки
 func BlockedResponse(w http.ResponseWriter, reason string) {
-    w.Header().Set("Content-Type", "text/html; charset=utf-8")
-    w.WriteHeader(http.StatusForbidden)
-    
-    data := struct {
-        Reason string
-    }{
-        Reason: reason,
-    }
-    
-    blockedTemplate.Execute(w, data)
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(http.StatusForbidden)
+
+	data := struct {
+		Reason string
+	}{
+		Reason: reason,
+	}
+
+	blockedTemplate.Execute(w, data)
 }
