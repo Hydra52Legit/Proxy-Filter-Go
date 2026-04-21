@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/http"
@@ -79,7 +80,7 @@ func (s *Server) handleRequest(w http.ResponseWriter, r *http.Request) {
 
 	// Если это запрос к нашему прокси напрямую
 	if strings.HasPrefix(r.RequestURI, "/stats") || strings.HasPrefix(r.RequestURI, "/") && r.URL.Host == "" {
-		return
+		return 
 	}
 
 	fmt.Printf("[%d] ✅ Пропускаю: %s\n", requestNum, host)
@@ -268,9 +269,9 @@ func getClientIP(r *http.Request) string {
 }
 
 // Stop останавливает сервер
-func (s *Server) Stop() error {
+func (s *Server) Stop(ctx context.Context) error {
 	if s.httpServer != nil {
-		return s.httpServer.Close()
+		return s.httpServer.Shutdown(ctx)
 	}
 	return nil
 }
