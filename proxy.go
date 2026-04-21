@@ -153,7 +153,7 @@ func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0% , #764ba2 100%);
+            background: linear-gradient(135deg, #667eea 0%%, #764ba2 100%%);
             margin: 0;
             padding: 20px;
         }
